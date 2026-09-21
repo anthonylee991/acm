@@ -1,7 +1,7 @@
 {
-  "name": "@skillvault/pcm-core",
-  "version": "1.0.0",
-  "description": "Peripheral Cognitive Mesh (PCM): A biologically inspired agent memory architecture with continuous Ebbinghaus decay, pinned guardrails, and slotted attention.",
+  "name": "@skillvault/acm-core",
+  "version": "2.0.0",
+  "description": "Arboreal Cognitive Mesh (ACM): A biologically inspired agent memory architecture with recursive substrates, synaptic consolidation, and bifurcation hysteresis.",
   "main": "src/index.ts",
   "type": "module",
   "scripts": {
@@ -17,13 +17,17 @@
     "ai",
     "agents",
     "memory",
+    "acm",
     "pcm",
+    "arbor",
+    "bifurcation",
+    "consolidation",
+    "hysteresis",
     "rag",
     "mem0",
     "zep",
     "cognitive-mesh",
-    "ebbinghaus",
-    "embeddings"
+    "ebbinghaus"
   ],
   "author": "Anthony Lee",
   "license": "MIT",

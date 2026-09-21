@@ -85,3 +85,37 @@ export const RecallResponseSchema = z.object({
   rawText: z.string().optional(),
 });
 export type RecallResponse = z.infer<typeof RecallResponseSchema>;
+
+// --- ACM (Arboreal Cognitive Mesh) Schemas ---
+
+export const ArborNodeTypeSchema = z.enum(["leaf", "branch", "root"]);
+export type ArborNodeType = z.infer<typeof ArborNodeTypeSchema>;
+
+export interface ArborNode {
+  id: string;
+  text: string;
+  type: ArborNodeType;
+  depth: number;
+  parentId?: string;
+  summary?: string;
+  attentionalEnergy?: number;
+  isUnpacked?: boolean;
+  importance?: Importance;
+  strength?: number;
+  children?: ArborNode[];
+  metadata?: Record<string, unknown>;
+}
+
+export const ConsolidatedAxiomSchema = z.object({
+  id: z.string().uuid(),
+  axiom: z.string().min(1),
+  sourceEpisodicIds: z.array(z.string().uuid()).min(1),
+  confidence: z.number().min(0).max(1.0).default(0.9),
+  scope: MemoryScopeSchema,
+  createdAt: z.string().datetime({ offset: true }).optional().or(z.string().datetime().optional()),
+});
+export type ConsolidatedAxiom = z.infer<typeof ConsolidatedAxiomSchema>;
+
+export const HysteresisStateSchema = z.enum(["relaxed", "locked"]);
+export type HysteresisState = z.infer<typeof HysteresisStateSchema>;
+

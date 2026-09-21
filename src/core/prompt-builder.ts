@@ -3,7 +3,10 @@ import type {
   AskerContextItem,
   SituationalContextItem,
   AnomalyFlagItem,
+  ArborNode,
+  HysteresisState,
 } from "../schema/index.js";
+import { formatArborToMarkdown } from "./arbor.js";
 
 export interface BuildPAESlotsParams {
   userQuery: string;
@@ -11,6 +14,13 @@ export interface BuildPAESlotsParams {
   askerItems?: AskerContextItem[];
   situationalItems?: SituationalContextItem[];
   anomalyFlags?: AnomalyFlagItem[];
+  arborContext?: ArborNode;
+  hysteresisState?: HysteresisState;
+}
+
+export interface FormatSlotsOptions {
+  arborContext?: ArborNode;
+  hysteresisState?: HysteresisState;
 }
 
 export function buildPAESlots(params: BuildPAESlotsParams): PAESlots {
@@ -103,14 +113,23 @@ export function resolveSupersededContext(situationalItems: SituationalContextIte
   return resolved;
 }
 
-export function formatSlotsToMarkdown(slots: PAESlots): string {
+export function formatSlotsToMarkdown(slots: PAESlots, options?: FormatSlotsOptions): string {
   const parts: string[] = [];
+
+  if (options?.hysteresisState === "locked") {
+    parts.push("> [!IMPORTANT]\n> **ATTRACTOR BASIN LOCKED**: Operational guardrails are topologically phase-locked via bifurcation hysteresis.");
+  }
 
   if (slots.asker_context && slots.asker_context.length > 0) {
     parts.push("### [ASKER CONTEXT: Pinned Rules & Preferences]");
     for (const item of slots.asker_context) {
       parts.push(`- ${item.text}`);
     }
+  }
+
+  if (options?.arborContext) {
+    parts.push("### [ARBOREAL CONTEXT: Recursive Substrates]");
+    parts.push(formatArborToMarkdown(options.arborContext));
   }
 
   const situational = resolveSupersededContext(slots.situational_context ?? []);
