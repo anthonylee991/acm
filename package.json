@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "test": "bun test",
-    "benchmark": "bun run src/evals/architectural-sim.ts",
+    "benchmark": "bun run src/evals/acm-comparative-benchmark.ts",
+    "benchmark:sim": "bun run src/evals/architectural-sim.ts",
     "benchmark:live": "bun run src/evals/live-harness.ts",
     "benchmark:human": "bun run src/evals/human-benchmark.ts",
     "benchmark:standard": "bun run src/evals/standard-benchmarks.ts",

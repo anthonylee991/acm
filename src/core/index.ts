@@ -6,4 +6,6 @@ export * from "./prompt-builder.js";
 export * from "./arbor.js";
 export * from "./consolidation.js";
 export * from "./hysteresis.js";
+export * from "./swarm.js";
+
 

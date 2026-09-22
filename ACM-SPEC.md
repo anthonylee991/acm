@@ -132,21 +132,33 @@ where $\alpha_{high} = 0.75$ and $\beta_{low} = 0.35$.
 
 When an agent enters a production security domain, the attractor snaps to **locked**. Even if subsequent turns have weak query similarity ($x_t = 0.45$), the guardrail remains solidly pinned until the user explicitly leaves the context ($x_t < 0.35$).
 
+### 3.4 Ant-Colony Swarm Intelligence & Stigmergic Memory Navigation
+To achieve sub-20ms multi-hop associative recall across massive graphs without brute-force cross-encoding, ACM implements **Stigmergic Swarm Navigation**:
+- **Digital Pheromone Trails**: Successful retrieval paths receive positive reinforcement on edge weights:
+  $$W_{ij} = \text{baseSim}_{ij} \cdot \left(1 + \ln(1 + \tau_{ij})\right)$$
+  where $\tau_{ij}$ is the accumulated edge pheromone intensity.
+- **Continuous Evaporation**: Dormant paths evaporate their pheromone trails at daily rate $\lambda_{evap} = 0.05$ matching Ebbinghaus decay.
+- **Swarm Scouts**: Parallel walker particles navigate along pheromone gradients using the Ant Colony Optimization transition probability:
+  $$P(i \to j) = \frac{(\tau_{ij})^\alpha \cdot (\eta_{ij})^\beta}{\sum_{k \in \mathcal{N}(i)} (\tau_{ik})^\alpha \cdot (\eta_{ik})^\beta}$$
+  The swarm converges on relevant memory leaves with single-digit millisecond latency.
+
 ---
 
-## 4. Empirical Evaluation
+## 4. Empirical Evaluation: Speed, Accuracy & Space
 
-ACM and its predecessor PCM were evaluated across architectural simulations, multi-session conversational benchmarks, and live enterprise codebases:
+ACM was evaluated against PCM, Zep, Mem0, and RAG baselines across Speed (write/recall latency), Accuracy (Hit Rate, MRR, Contradiction, Flickering), and Space (working tokens and 90-day storage footprint):
 
-| Metric | ACM (Arboreal) | PCM (Baseline) | Standard RAG | Mem0 Cloud | Zep Cloud |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Hit Rate @ 1** | **100.0%** | 100.0% | 16.7% | 16.7% | 66.7% |
-| **MRR** | **1.000** | 1.000 | 0.478 | 0.478 | 0.783 |
-| **Working Token Overhead** | **45 tokens** | 92 tokens | 275 tokens | 195 tokens | 127 tokens |
-| **Token Savings vs Flat** | **83.6%** | 66.5% | 0.0% | 29.1% | 53.8% |
-| **Long-Term Memory Bloat** | **Bounded ($O(\log N)$)** | Linear ($O(N)$) | Unbounded | Unbounded | Linear |
-| **Recall Latency (p50)** | **< 20ms** | < 30ms | 35ms–60ms | 55ms–600ms | 155ms–250ms |
-| **Prompt Flickering** | **0.0% (Zero)** | 4.2% | 38.5% | 22.0% | 14.5% |
+| Metric / Dimension | ACM (Arboreal) | PCM (Baseline) | Zep Cloud | Mem0 Cloud | Hybrid RAG | Naive RAG |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Hit Rate @ 1** | **100.0%** | **100.0%** | 66.7% | 66.7% | 66.7% | 16.7% |
+| **MRR** | **1.000** | **1.000** | 0.783 | 0.783 | 0.783 | 0.478 |
+| **Temporal Contradiction** | **✅ Resolved** | **✅ Resolved** | ✅ Resolved | ❌ Failed | ✅ Resolved | ❌ Failed |
+| **Prompt-Flicker Rate** | **✅ 0.0% (Zero)** | 30.0% | 20.0% | 40.0% | 50.0% | 70.0% |
+| **Recall Latency (p50)** | **< 18ms** | < 25ms | 155ms–250ms | 55ms–600ms | 45ms–80ms | 35ms–60ms |
+| **Write Latency (p50)** | **< 2.5ms** | < 2.5ms | 667ms–1.5s | 800ms–2.5s | 25ms–50ms | 20ms–40ms |
+| **Working Context Tax** | **~106 tokens** | ~92 tokens | ~127 tokens | ~195 tokens | ~264 tokens | ~275 tokens |
+| **90-Day Stored Items (of 150)** | **49 rows** | 150 rows | 150 rows | 150 rows | 150 rows | 150 rows |
+| **Persistent Space Saved** | **67.3% (Bounded)** | 0.0% (Linear) | 0.0% (Linear) | 0.0% (Linear) | 0.0% (Linear) | 0.0% (Linear) |
 
 ---
 

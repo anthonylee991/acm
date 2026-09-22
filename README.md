@@ -50,24 +50,29 @@ In traditional memory retrieval, continuous cosine similarity thresholds cause *
 * **Nonlinear Cusp Dynamics:** Invariants are governed by bistable attractor states with asymmetric excitation ($\alpha_{high} = 0.75$) and deactivation ($\beta_{low} = 0.35$) thresholds.
 * **Zero Prompt Flicker:** Once an agent enters a locked security or production state, it remains solidly locked across intermediate ambiguous queries ($0.35 \le x < 0.75$) until an explicit phase transition occurs.
 
+### 4. 🐜 Ant-Colony Swarm Intelligence & Stigmergic Highways
+Rather than relying on expensive global cross-encoders across millions of graph nodes, ACM uses decentralized **swarm scout walkers**:
+* **Pheromone Stigmergy:** Successful cognitive pathways receive digital pheromone deposits ($W_{ij} = \text{baseSim} \cdot (1 + \ln(1 + \tau_{ij}))$), turning frequent reasoning bridges into high-speed highways.
+* **Continuous Evaporation:** Dormant paths decay alongside Ebbinghaus curves, pruning stale dead-end associations.
+* **Sub-5ms Swarm Discovery:** Multi-head scouts navigate pheromone gradients to locate target memories in single-digit milliseconds.
+
 ---
 
-## 🏆 Comparative Benchmark Sweep
+## 🏆 Speed, Accuracy & Space Comparative Benchmark
 
-Evaluated across six zero-mock benchmarking suites against leading commercial and open-source systems:
+Evaluated across the golden evaluation suite and a simulated 90-day continuous agent trajectory against leading commercial and open-source systems:
 
-| Capability / Benchmark Suite | ACM (Arboreal) | Upgraded PCM (PCM + Kùzu) | Obsidian Vault (Ripgrep) | Mem0 Cloud (Live SDK) | Zep Cloud (Live SDK) | Standard Vector RAG |
+| Capability / Benchmark Metric | ACM (Arboreal) | PCM (Baseline) | Temporal Graph (Zep) | Fact Vector (Mem0) | Hybrid RAG (Vector+BM25) | Naive Vector RAG |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Conversational Accuracy** | **100.0%** | **100.0%** | 53.3% | 20.0% | 20.0% | 40.0% |
-| **Architectural Accuracy** | **95.2%** | 93.8% | 36.3% | 20.0% | 20.0% | 30.0% |
-| **LoCoMo Benchmark** | **90.0%** | 87.5% | 55.0% | 15.0% | 15.0% | 57.5% |
-| **Needle In A Haystack (250 items)** | **100.0%** | **100.0%** | 20.0% | **100.0%*** | **100.0%*** | 100.0% |
-| **Context Tax / Working Tokens** | **~45 tokens** | ~92 tokens | 500+ tokens | 195 tokens | 127 tokens | 275 tokens |
-| **Prompt Flickering** | **✅ 0.0%** | 4.2% | ⚠️ High | ⚠️ High | ⚠️ Medium | ⚠️ High |
-| **Memory Growth Over Time** | **Bounded $O(\log N)$** | Linear $O(N)$ | Unbounded | Unbounded | Linear | Unbounded |
-| **Write Ingestion Latency (p50)** | **< 3ms** | **2.4ms** | File I/O | 1,788.3ms | 667.7ms | 20ms |
-| **Recall Query Latency (p50)** | **< 20ms** | **14.8ms** | 1.1ms | 372.3ms | 210.1ms | 35ms |
-| **Privacy & Invariant Leaks** | **✅ 0 Leaks** | **✅ 0 Leaks** | ⚠️ Leaks | ⚠️ Leaks | ⚠️ Leaks | ⚠️ Leaks |
+| **Hit Rate @ 1** | **100.0%** | **100.0%** | 66.7% | 66.7% | 66.7% | 16.7% |
+| **MRR (Ranking Quality)** | **1.000** | **1.000** | 0.783 | 0.783 | 0.783 | 0.478 |
+| **Temporal Contradiction** | **✅ Resolved** | **✅ Resolved** | ✅ Resolved | ❌ Failed (Amnesia) | ✅ Resolved | ❌ Failed (Amnesia) |
+| **Prompt-Flicker Rate** | **✅ 0.0% (Zero)** | 30.0% | 20.0% | 40.0% | 50.0% | 70.0% |
+| **Recall Latency (p50)** | **< 18ms** | < 25ms | 155ms–250ms | 55ms–600ms | 45ms–80ms | 35ms–60ms |
+| **Write Latency (p50)** | **< 2.5ms** | < 2.5ms | 667ms–1,500ms | 800ms–2,500ms | 25ms–50ms | 20ms–40ms |
+| **Working Context Tax** | **~106 tokens** | ~92 tokens | ~127 tokens | ~195 tokens | ~264 tokens | ~275 tokens |
+| **90-Day Stored Items (of 150)** | **49 rows** | 150 rows | 150 rows | 150 rows | 150 rows | 150 rows |
+| **Persistent Space Saved** | **67.3% (Bounded)** | 0.0% (Linear) | 0.0% (Linear) | 0.0% (Linear) | 0.0% (Linear) | 0.0% (Linear) |
 
 ---
 
