@@ -18,9 +18,13 @@ export interface BuildPAESlotsParams {
   hysteresisState?: HysteresisState;
 }
 
+export const MAX_SLOTTED_PAYLOAD_BYTES = 3584; // 3.5 KB budget
+
 export interface FormatSlotsOptions {
   arborContext?: ArborNode;
   hysteresisState?: HysteresisState;
+  format?: "slotted" | "tree" | "text" | "json";
+  maxBytes?: number;
 }
 
 export function buildPAESlots(params: BuildPAESlotsParams): PAESlots {
@@ -50,20 +54,6 @@ const SUPERSEDES_MARKER_RE = /^\[SUPERSEDES:\s*([^\]]+?)\s*\]\s*/;
 
 /**
  * Resolves declared supersession/restriction signals in situational context.
- *
- * Only explicit signals are acted on — never free-text inference:
- *
- * - Relation triplets (`[RELATION](source)-[PREDICATE]->(target)`) are
- *   formatted for presentation: SUPERSEDES/REPLACES render the source as the
- *   active state, FORBIDDEN_DUE_TO as a restriction, CONFIDENTIAL_INVARIANT
- *   as a withheld-details notice naming the target. An item whose text is an
- *   exact (case-insensitive) match of a SUPERSEDES/REPLACES target is pruned.
- * - `[SUPERSEDES: <memoryId>]` markers prune the targeted item by id; the
- *   declaring item renders with the marker stripped.
- *
- * Everything else passes through verbatim. Partial mentions of a superseded
- * entity are deliberately retained — false negatives are preferable to
- * silently dropping content the caller never marked superseded.
  */
 export function resolveSupersededContext(situationalItems: SituationalContextItem[]): SituationalContextItem[] {
   const supersededIds = new Set<string>();
@@ -115,38 +105,62 @@ export function resolveSupersededContext(situationalItems: SituationalContextIte
 
 export function formatSlotsToMarkdown(slots: PAESlots, options?: FormatSlotsOptions): string {
   const parts: string[] = [];
+  const seenTexts = new Set<string>();
 
-  if (options?.hysteresisState === "locked") {
-    parts.push("> [!IMPORTANT]\n> **ATTRACTOR BASIN LOCKED**: Operational guardrails are topologically phase-locked via bifurcation hysteresis.");
-  }
-
+  // 1. ASKER CONTEXT (Pure pinned rules only, max 5, deduplicated)
   if (slots.asker_context && slots.asker_context.length > 0) {
-    parts.push("### [ASKER CONTEXT: Pinned Rules & Preferences]");
-    for (const item of slots.asker_context) {
-      parts.push(`- ${item.text}`);
+    const askerLines: string[] = ["### [ASKER CONTEXT: Pinned Rules & Preferences]"];
+    for (const item of slots.asker_context.slice(0, 5)) {
+      const normalized = item.text.trim();
+      if (!seenTexts.has(normalized)) {
+        askerLines.push(`- ${normalized}`);
+        seenTexts.add(normalized);
+      }
+    }
+    if (askerLines.length > 1) {
+      parts.push(askerLines.join("\n"));
     }
   }
 
-  if (options?.arborContext) {
-    parts.push("### [ARBOREAL CONTEXT: Recursive Substrates]");
-    parts.push(formatArborToMarkdown(options.arborContext));
+  // 2. ARBOREAL CONTEXT: Only rendered when explicitly requested via format: "tree"
+  if (options?.arborContext && options?.format === "tree") {
+    parts.push("### [ARBOREAL CONTEXT: Recursive Substrates]\n" + formatArborToMarkdown(options.arborContext));
   }
 
-  const situational = resolveSupersededContext(slots.situational_context ?? []);
+  // 3. SITUATIONAL CONTEXT (Deduplicated against Asker context)
+  const rawSituational = slots.situational_context ?? [];
+  const resolvedSituational = resolveSupersededContext(rawSituational);
 
-  if (situational.length > 0) {
-    parts.push("### [SITUATIONAL CONTEXT: Recent Decisions & Context]");
-    for (const item of situational) {
-      parts.push(`- ${item.text}`);
+  if (resolvedSituational.length > 0) {
+    const sitLines: string[] = ["### [SITUATIONAL CONTEXT: Recent Decisions & Context]"];
+    for (const item of resolvedSituational.slice(0, 5)) {
+      const normalized = item.text.trim();
+      if (!seenTexts.has(normalized)) {
+        sitLines.push(`- ${normalized}`);
+        seenTexts.add(normalized);
+      }
+    }
+    if (sitLines.length > 1) {
+      parts.push(sitLines.join("\n"));
     }
   }
 
+  // 4. ANOMALY FLAGS
   if (slots.anomaly_flags && slots.anomaly_flags.length > 0) {
-    parts.push("### [ANOMALY FLAGS: Drift & Contradiction Alerts]");
-    for (const item of slots.anomaly_flags) {
-      parts.push(`- [FLAG: ${item.direction.toUpperCase()}] ${item.description}`);
+    const flagLines: string[] = ["### [ANOMALY FLAGS: Drift & Contradiction Alerts]"];
+    for (const item of slots.anomaly_flags.slice(0, 3)) {
+      flagLines.push(`- [FLAG: ${item.direction.toUpperCase()}] ${item.description}`);
     }
+    parts.push(flagLines.join("\n"));
   }
 
-  return parts.join("\n\n");
+  let result = parts.join("\n\n");
+  const maxBytes = options?.maxBytes ?? MAX_SLOTTED_PAYLOAD_BYTES;
+
+  if (Buffer.byteLength(result, "utf8") > maxBytes) {
+    const buf = Buffer.from(result, "utf8");
+    result = buf.subarray(0, maxBytes - 35).toString("utf8") + "\n... [Context truncated to 3.5KB]";
+  }
+
+  return result;
 }

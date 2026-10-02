@@ -141,6 +141,14 @@ To achieve sub-20ms multi-hop associative recall across massive graphs without b
 - **Swarm Scouts**: Parallel walker particles navigate along pheromone gradients using the Ant Colony Optimization transition probability:
   $$P(i \to j) = \frac{(\tau_{ij})^\alpha \cdot (\eta_{ij})^\beta}{\sum_{k \in \mathcal{N}(i)} (\tau_{ik})^\alpha \cdot (\eta_{ik})^\beta}$$
   The swarm converges on relevant memory leaves with single-digit millisecond latency.
+- **Decoupled Read-Only Exploration**: Swarm search does not mutate pheromones during exploration; stigmergy trails are deposited solely via explicit post-recall feedback (`reinforcePath` / `penalizePath`), eliminating premature canalization.
+
+### 3.5 Production Ingestion Hygiene & Precision-Gated Retrieval (Fable Optimization Spec)
+To prevent production degradation over thousands of agent commits and turns:
+1. **Ingestion Hygiene Gate**: Incoming memories pass through regex classification (`isMilestoneNoise`). Ephemeral logs (PR merges, commit hashes, CI/CD deploy checks) are quarantined directly into `state = 'archived'` with immediate `stale_at = now()`, keeping the active vector space pure.
+2. **Active Supersession Tombstoning**: When an incoming memory includes override target phrases (`supersedes:`, `correction for:`, `replaces:`), matching older active memories in the same project scope are immediately retired (`stale_at = now()`, `last_pruned_reason = 'superseded'`, `strength = 0.1`).
+3. **Retrieval Precision Floor (0.52)**: Recall candidates must satisfy $\text{similarity} \ge 0.52$ (unless explicitly pinned). If no memories pass, ACM returns an honest empty response (`[MEMVAULT] No memories found matching query`) rather than distractor padding.
+4. **Slotted Payload Discipline (< 3.5KB)**: Default slotted recall outputs clean, dense markdown with cross-section deduplication and strict 3.5KB payload caps. The full Arboreal capillary tree is decoupled and rendered only when explicitly requested (`format: 'tree'`). All technobabble presentation noise is eliminated.
 
 ---
 

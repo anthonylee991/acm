@@ -3,7 +3,7 @@ import { z } from "zod";
 export const ImportanceSchema = z.enum(["pinned", "high", "default"]);
 export type Importance = z.infer<typeof ImportanceSchema>;
 
-export const MemoryStateSchema = z.enum(["stm", "ltm", "archived"]);
+export const MemoryStateSchema = z.enum(["active", "archived", "stm", "ltm"]);
 export type MemoryState = z.infer<typeof MemoryStateSchema>;
 
 export const MemoryScopeSchema = z.object({
@@ -21,6 +21,10 @@ export const IngestTextRequestSchema = z.object({
   scope: MemoryScopeSchema,
   source: z.enum(["cli", "api", "upload", "mcp", "webhook"]).default("api"),
   sourceRef: z.string().optional(),
+  supersedes: z.string().optional(),
+  state: MemoryStateSchema.default("active"),
+  stale_at: z.string().optional(),
+  last_pruned_reason: z.string().optional(),
 });
 export type IngestTextRequest = z.infer<typeof IngestTextRequestSchema>;
 
@@ -37,7 +41,7 @@ export const RecallRequestSchema = z.object({
   k: z.coerce.number().int().positive().max(50).default(5),
   lens: MemoryLensSchema.default("agent"),
   scope: MemoryScopeSchema,
-  format: z.enum(["slotted", "text", "json"]).default("slotted"),
+  format: z.enum(["slotted", "tree", "text", "json"]).default("slotted"),
   includeStale: z.coerce.boolean().default(false),
 });
 export type RecallRequest = z.infer<typeof RecallRequestSchema>;
@@ -57,6 +61,9 @@ export const SituationalContextItemSchema = z.object({
   occurredAt: z.string().optional(),
   trajectory: z.string().optional(),
   scope: MemoryScopeSchema.optional(),
+  state: MemoryStateSchema.optional(),
+  stale_at: z.string().optional(),
+  last_pruned_reason: z.string().optional(),
 });
 export type SituationalContextItem = z.infer<typeof SituationalContextItemSchema>;
 
@@ -80,7 +87,7 @@ export type PAESlots = z.infer<typeof PAESlotsSchema>;
 
 export const RecallResponseSchema = z.object({
   slots: PAESlotsSchema,
-  format: z.enum(["pae-slotted-v1", "text", "json"]),
+  format: z.enum(["acm-slotted-v1", "pae-slotted-v1", "tree", "text", "json"]),
   lens: MemoryLensSchema,
   rawText: z.string().optional(),
 });

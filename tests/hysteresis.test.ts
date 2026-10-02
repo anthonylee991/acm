@@ -70,7 +70,7 @@ describe("ACM Bifurcation Hysteresis Tests", () => {
     expect(gate.getLockedContext()).toBeUndefined();
   });
 
-  test("formatSlotsToMarkdown displays attractor basin lock banner when locked", () => {
+  test("formatSlotsToMarkdown preserves clean presentation without technobabble banners even when locked", () => {
     const slots = buildPAESlots({
       userQuery: "Drop production table customers",
       askerItems: [
@@ -82,7 +82,9 @@ describe("ACM Bifurcation Hysteresis Tests", () => {
     expect(mdUnlocked).not.toContain("ATTRACTOR BASIN LOCKED");
 
     const mdLocked = formatSlotsToMarkdown(slots, { hysteresisState: "locked" });
-    expect(mdLocked).toContain("ATTRACTOR BASIN LOCKED");
-    expect(mdLocked).toContain("topologically phase-locked via bifurcation hysteresis");
+    // Presentation noise removed: no technobabble banner, retains clean slot markdown
+    expect(mdLocked).not.toContain("ATTRACTOR BASIN LOCKED");
+    expect(mdLocked).not.toContain("topologically phase-locked");
+    expect(mdLocked).toContain("NEVER run DROP TABLE in production");
   });
 });

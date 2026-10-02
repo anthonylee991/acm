@@ -100,6 +100,35 @@ export class PheromoneMesh {
     return Array.from(this.edges.values());
   }
 
+  /**
+   * Penalizes pheromone on an edge (negative stigmergy feedback upon failed recall/correction).
+   */
+  public penalizePheromone(sourceId: string, targetId: string, amount: number = 0.2): void {
+    const key = this.edgeKey(sourceId, targetId);
+    const existing = this.edges.get(key);
+    if (existing) {
+      existing.pheromone = Math.max(0.01, existing.pheromone - amount);
+    }
+  }
+
+  /**
+   * Explicitly reinforces an entire path of nodes after confirmed utility.
+   */
+  public reinforcePath(visitedPath: string[], amount: number = 0.4): void {
+    for (let i = 0; i < visitedPath.length - 1; i++) {
+      this.depositPheromone(visitedPath[i]!, visitedPath[i + 1]!, amount);
+    }
+  }
+
+  /**
+   * Explicitly penalizes an entire path of nodes after confirmed failure or distraction.
+   */
+  public penalizePath(visitedPath: string[], amount: number = 0.2): void {
+    for (let i = 0; i < visitedPath.length - 1; i++) {
+      this.penalizePheromone(visitedPath[i]!, visitedPath[i + 1]!, amount);
+    }
+  }
+
   public clear(): void {
     this.edges.clear();
   }
@@ -127,8 +156,24 @@ export class SwarmNavigator {
   }
 
   /**
+   * Explicitly reinforces a path upon confirmed recall utility or positive agent feedback.
+   * Decoupled from search to prevent premature reinforcement of misleading paths.
+   */
+  public reinforcePath(visitedPath: string[], amount: number = 0.4): void {
+    this.mesh.reinforcePath(visitedPath, amount);
+  }
+
+  /**
+   * Explicitly penalizes a path when verified as a distractor, superseded, or erroneous.
+   */
+  public penalizePath(visitedPath: string[], amount: number = 0.2): void {
+    this.mesh.penalizePath(visitedPath, amount);
+  }
+
+  /**
    * Navigates the swarm from seed entry points across candidate graph edges.
    * Returns ranked nodes discovered by the swarm.
+   * NOTE: Search is read-only. It does NOT automatically mutate pheromones to avoid premature canalization.
    */
   public search(
     seedNodeIds: string[],
@@ -219,13 +264,8 @@ export class SwarmNavigator {
       return b.accumulatedScore - a.accumulatedScore;
     });
 
-    // Reinforce pheromones on the winning paths (positive stigmergy feedback)
-    if (results.length > 0) {
-      const topWinner = results[0]!;
-      for (let i = 0; i < topWinner.visitedPath.length - 1; i++) {
-        this.mesh.depositPheromone(topWinner.visitedPath[i]!, topWinner.visitedPath[i + 1]!, 0.4);
-      }
-    }
+    // NOTE: Scout search is pure read-only exploration.
+    // Explicit reinforcement is performed via navigator.reinforcePath(...) upon confirmed feedback.
 
     return results;
   }

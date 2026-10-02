@@ -1,7 +1,7 @@
 # Arboreal Cognitive Mesh (ACM)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Tests: 28 Passing](https://img.shields.io/badge/Tests-28%20Passing-brightgreen.svg)]()
+[![Tests: 42 Passing](https://img.shields.io/badge/Tests-42%20Passing-brightgreen.svg)]()
 [![Memory Horizon](https://img.shields.io/badge/Memory%20Growth-Bounded%20O(log%20N)-purple.svg)]()
 [![Token Savings](https://img.shields.io/badge/Context%20Tax%20Reduction-83.6%25-success.svg)]()
 [![Recall Latency](https://img.shields.io/badge/Recall%20Latency-%3C%2020ms-blue.svg)]()
@@ -27,7 +27,15 @@
   ┌────────────────▼────────────────┐
   │  ACM (Arboreal Cognitive        │  1. Recursive Substrates (Level-of-Detail Bifurcation)
   │  Mesh)                          │  2. Synaptic Consolidation (Episodic -> Semantic)
-  └─────────────────────────────────┘  3. Nonlinear Hysteresis Attractor Basins
+  └────────────────┬────────────────┘  3. Nonlinear Hysteresis Attractor Basins
+                   │  Production-Hardened with:
+  ┌────────────────▼────────────────┐
+  │  ACM 2.1 (Fable Hardened)       │  • Ingestion Hygiene Gate (Quarantines commit/milestone noise)
+  │                                 │  • Active Supersession Tombstoning (stale_at on overrides)
+  │                                 │  • 0.52 Precision Floor & Honest Empty Recalls
+  │                                 │  • Decoupled Clean Priming (< 3.5KB payload, zero bloat)
+  │                                 │  • Decoupled Swarm Exploration (Read-only scout search)
+  └─────────────────────────────────┘
 ```
 
 ---
@@ -52,9 +60,16 @@ In traditional memory retrieval, continuous cosine similarity thresholds cause *
 
 ### 4. 🐜 Ant-Colony Swarm Intelligence & Stigmergic Highways
 Rather than relying on expensive global cross-encoders across millions of graph nodes, ACM uses decentralized **swarm scout walkers**:
-* **Pheromone Stigmergy:** Successful cognitive pathways receive digital pheromone deposits ($W_{ij} = \text{baseSim} \cdot (1 + \ln(1 + \tau_{ij}))$), turning frequent reasoning bridges into high-speed highways.
+* **Pheromone Stigmergy:** Discovered cognitive pathways are reinforced via verified feedback (`reinforcePath`), turning frequent reasoning bridges into high-speed highways.
 * **Continuous Evaporation:** Dormant paths decay alongside Ebbinghaus curves, pruning stale dead-end associations.
-* **Sub-5ms Swarm Discovery:** Multi-head scouts navigate pheromone gradients to locate target memories in single-digit milliseconds.
+* **Read-Only Exploration:** Swarm scout searches are decoupled from pheromone deposits to eliminate premature canalization of false leads.
+
+### 5. 🛡️ Ingestion Hygiene & Precision-Gated Retrieval (Fable Optimization Spec)
+Production AI agents operating across hundreds of commits degrade into noise if trivial progress logs or superseded rules pollute vector search:
+* **Ingestion Hygiene Gate (`isMilestoneNoise`):** Quarantines ephemeral progress messages (*"PR #268 merged"*, *"post-deploy check passed"*) into `state: 'archived'` with immediate `stale_at`, preserving the vector store exclusively for high-signal architectural decisions, traps, and procedures.
+* **Active Supersession Tombstoning:** Automatically detects override phrases (`supersedes:`, `correction for:`, `replaces:`) and soft-prunes matching older contradictory memories (`stale_at = now()`, `strength = 0.1`).
+* **0.52 Precision Floor & Honest Empty Recalls:** Drops weak similarities below 0.52 to prevent distractor padding on topic misses; returns honest `[MEMVAULT] No memories found matching query` instead of irrelevant filler.
+* **Strict Payload Discipline (< 3.5KB):** Slotted context defaults to dense markdown (< 3.5KB) with cross-section deduplication and zero technobabble banners. The full Arboreal capillary tree is decoupled and rendered only when explicitly requested (`format: 'tree'`).
 
 ---
 

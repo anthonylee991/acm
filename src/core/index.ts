@@ -7,5 +7,7 @@ export * from "./arbor.js";
 export * from "./consolidation.js";
 export * from "./hysteresis.js";
 export * from "./swarm.js";
+export * from "./hygiene.js";
+export * from "./retrieval-gate.js";
 
 

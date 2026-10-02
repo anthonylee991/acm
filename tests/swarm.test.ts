@@ -67,7 +67,15 @@ describe("ACM Swarm Intelligence & Stigmergy Tests", () => {
     expect(results[0]?.nodeId).toBe("leaf-target-secret");
     expect(results[0]?.accumulatedScore).toBeGreaterThan(0.5);
 
-    // Stigmergy reinforcement must be added to winning path
-    expect(mesh.getPheromone("branch-security", "leaf-target-secret")).toBeGreaterThan(5.0);
+    // Scout search is read-only: pheromone should NOT be mutated prematurely
+    expect(mesh.getPheromone("branch-security", "leaf-target-secret")).toBe(5.0);
+
+    // Explicit feedback reinforces the verified path
+    navigator.reinforcePath(results[0]!.visitedPath, 0.4);
+    expect(mesh.getPheromone("branch-security", "leaf-target-secret")).toBe(5.4);
+
+    // Explicit penalty decreases pheromone
+    navigator.penalizePath(results[0]!.visitedPath, 0.2);
+    expect(mesh.getPheromone("branch-security", "leaf-target-secret")).toBe(5.2);
   });
 });

@@ -109,8 +109,8 @@ describe("ACM Arborization & Recursive Substrates Tests", () => {
 
     const md = formatArborToMarkdown(root);
 
-    // Packed branch must show compressed pointer and hide its leaf
-    expect(md).toContain("COMPRESSED SUBGRAPH: OAuth2 & JWT rotation (1 leaves hidden)");
+    // Packed branch must show compressed summary and hide its leaf
+    expect(md).toContain("Authentication Subsystem**: OAuth2 & JWT rotation");
     expect(md).not.toContain("Secret tokens rotate every 90 days");
 
     // Active branch must reveal its full capillary details

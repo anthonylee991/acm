@@ -112,8 +112,8 @@ export function formatArborToMarkdown(node: ArborNode, indentLevel: number = 0):
 
   // Branch or Root
   if (!node.isUnpacked && indentLevel > 0) {
-    // Compressed capillary pointer
-    return `${indent}- ${prefix} **${node.text}** [COMPRESSED SUBGRAPH: ${node.summary ?? "Nested context"} (${node.children?.length ?? 0} leaves hidden)]`;
+    // Compressed capillary pointer: clean and concise
+    return `${indent}- ${prefix} **${node.text}**${node.summary ? `: ${node.summary}` : ""}`;
   }
 
   const lines: string[] = [];
