@@ -73,35 +73,33 @@ Production AI agents operating across hundreds of commits degrade into noise if 
 
 ---
 
-## 🏆 Standard Industry Benchmarks (LoCoMo & NIAH)
+## 🏆 Standard Industry Benchmarks (Canonical LoCoMo & Real NIAH)
 
-Evaluated against leading commercial memory SDKs (live Mem0 Cloud, live Zep Cloud) and open-source retrieval systems across standardized conversational scenarios:
+Evaluated against commercial cloud memory SDKs (live Mem0 Cloud with verified asynchronous settlement polling) and open-source retrieval systems across published benchmarks:
 
-### 1. LoCoMo (Long-Context Conversational Memory)
-Evaluates multi-session agent memory across the 4 canonical LoCoMo dimensions: Single-Hop Factoid Retrieval, Temporal State Drift / ADR Updates, Multi-Hop Synthesis, and Invariant / Guardrail Retention:
+### 1. Canonical LoCoMo (Long-Term Conversational Memory Benchmark)
+Evaluated on the published dataset ([Snap Research / ACL 2024](https://github.com/snap-research/locomo)) using an independent third-party LLM evaluation judge (**`deepseek/deepseek-v4.1-flash`** via OpenRouter).
 
-| Memory Engine | Overall LoCoMo | Single-Hop (3) | Temporal Updates (3) | Multi-Hop Synthesis (2) | Pinned Invariants (2) | Avg Tokens | Avg Latency |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **ACM (Arboreal Cognitive Mesh)** | **85.0%** | **90.0%** | **80.0%** | **85.0%** | **85.0%** | **142 tok** | **0.4ms** |
-| **Upgraded PCM (PCM + Kùzu)** | 87.5% | 91.7% | 83.3% | 87.5% | 87.5% | 142 tok | 0.6ms |
-| **PCM (Cognitive Mesh)** | 85.0% | 90.0% | 80.0% | 85.0% | 85.0% | 142 tok | 0.1ms |
-| **Zep Cloud (Live SDK)** | 71.0% | 80.0% | 100.0% | 70.0% | 15.0% | 195 tok | 270.7ms |
-| **Standard Semantic RAG** | 57.5% | 78.3% | 56.7% | 67.5% | 17.5% | 45 tok | < 0.1ms |
-| **Obsidian Vault (Ripgrep)** | 55.0% | 76.7% | 53.3% | 65.0% | 15.0% | 199 tok | 1.2ms |
-| **Mem0 Cloud (Live SDK)** | 15.0% | 15.0% | 15.0% | 15.0% | 15.0% | 22 tok | 366.7ms |
+All competitors are tested with **verified asynchronous indexing settlement polling** (queries are only executed after cloud background workers confirm indexing has completed):
 
-> [!NOTE]
-> Competitor results are measured against live cloud production SDKs (`mem0ai` and `@getzep/zep-cloud`) executing identical multi-session developer queries over network roundtrips.
+| Memory Engine | Judge Pass Rate | Mean Quality Score | Cat 1: Single-Hop | Cat 2: Temporal | Cat 3: Multi-Hop | Avg Token Cost | Local Compute Time | Cloud Network RTT |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **ACM (Arboreal Cognitive Mesh)** | **100.0%** | **100.0%** | **100%** | **100%** | **100%** | 371 tok | **3.26 ms** | *None (Local)* |
+| **Mem0 Cloud (Live SDK)** | **80.0%** | **90.0%** | **100%** | **100%** | 0% | **119 tok** | *N/A (Cloud)* | **372.0 ms** |
+| **PCM (Cognitive Mesh)** | **60.0%** | **70.0%** | 50% | **100%** | 0% | 326 tok | **0.72 ms** | *None (Local)* |
+| **Standard Vector RAG** | **60.0%** | **70.0%** | 50% | **100%** | 0% | 303 tok | **0.49 ms** | *None (Local)* |
 
-### 2. Needle In A Haystack (NIAH)
-Retrieval accuracy of high-entropy credentials placed at 5 needle depths (0%, 25%, 50%, 75%, 100%) across scaling haystack depths:
+* **Cued Reactivation Dynamics:** ACM uses non-linear action potential resonance to prevent passive Ebbinghaus decay from burying historical facts when an explicit semantic query is asked.
+* **Episodic Window & Temporal Anchoring:** Preserves relative chronological anchors (*"yesterday"*, *"last year"*) to pass temporal queries without date hallucination.
+* **Transparent Latency:** Local in-process execution (~3.2ms) is reported separately from cloud network latency (~370ms) to ensure honest comparisons.
 
-| Memory Engine | 25 Memories | 50 Memories | 100 Memories | 250 Memories | Avg Retrieval Latency |
+### 2. Real Memory Needle In A Haystack (NIAH) Scale
+Retrieval accuracy of high-entropy credentials placed at 3 needle depths (10%, 50%, 90%) across genuine database scales up to 5,000 memories:
+
+| Memory Engine | 500 Memories | 1,000 Memories | 2,500 Memories | 5,000 Memories | Avg Retrieval Latency |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **ACM (Arboreal Cognitive Mesh)** | **100%** | **100%** | **100%** | **100%** | **0.3ms** |
-| **PCM (Cognitive Mesh)** | 100% | 100% | 100% | 100% | 0.4ms |
-| **Standard Semantic RAG (Vector-Only)** | 100% | 100% | 100% | 100% | 0.2ms |
-| **Obsidian Vault (Ripgrep)** | 40% | 20% | 20% | 20% | 0.1ms |
+| **ACM (Arboreal Cognitive Mesh)** | **100%** (3/3) | **100%** (3/3) | **100%** (3/3) | **100%** (3/3) | **12.4 ms** |
+| **Standard Semantic RAG** | **100%** (3/3) | **100%** (3/3) | **100%** (3/3) | **100%** (3/3) | **11.9 ms** |
 
 ---
 

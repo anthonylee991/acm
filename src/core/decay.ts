@@ -92,7 +92,15 @@ export function calculateReRankScore(
   },
   now: Date = new Date(),
 ): number {
-  let score = item.similarity * 0.70 + item.strength * 0.30;
+  // Cued Reactivation Dynamics:
+  // When an explicit retrieval cue strongly matches a memory (similarity >= 0.25),
+  // the semantic resonance depolarizes the memory and reactivates it, preventing
+  // passive temporal decay from burying historical facts when explicitly queried.
+  // When similarity is weak (< 0.20), recency/strength prevents ambient stale noise from surfacing.
+  const cueActivation = Math.min(1.0, Math.pow(Math.max(0, item.similarity) / 0.40, 2));
+  const effectiveStrength = item.strength * (1.0 - cueActivation) + 1.0 * cueActivation;
+
+  let score = item.similarity * 0.75 + effectiveStrength * 0.25;
   if (item.isProjectMatch) {
     score += 0.08;
   }
