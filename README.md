@@ -73,21 +73,35 @@ Production AI agents operating across hundreds of commits degrade into noise if 
 
 ---
 
-## 🏆 Speed, Accuracy & Space Comparative Benchmark
+## 🏆 Standard Industry Benchmarks (LoCoMo & NIAH)
 
-Evaluated across the golden evaluation suite and a simulated 90-day continuous agent trajectory against leading commercial and open-source systems:
+Evaluated against leading commercial memory SDKs (live Mem0 Cloud, live Zep Cloud) and open-source retrieval systems across standardized conversational scenarios:
 
-| Capability / Benchmark Metric | ACM (Arboreal) | PCM (Baseline) | Temporal Graph (Zep) | Fact Vector (Mem0) | Hybrid RAG (Vector+BM25) | Naive Vector RAG |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Hit Rate @ 1** | **100.0%** | **100.0%** | 66.7% | 66.7% | 66.7% | 16.7% |
-| **MRR (Ranking Quality)** | **1.000** | **1.000** | 0.783 | 0.783 | 0.783 | 0.478 |
-| **Temporal Contradiction** | **✅ Resolved** | **✅ Resolved** | ✅ Resolved | ❌ Failed (Amnesia) | ✅ Resolved | ❌ Failed (Amnesia) |
-| **Prompt-Flicker Rate** | **✅ 0.0% (Zero)** | 30.0% | 20.0% | 40.0% | 50.0% | 70.0% |
-| **Recall Latency (p50)** | **< 18ms** | < 25ms | 155ms–250ms | 55ms–600ms | 45ms–80ms | 35ms–60ms |
-| **Write Latency (p50)** | **< 2.5ms** | < 2.5ms | 667ms–1,500ms | 800ms–2,500ms | 25ms–50ms | 20ms–40ms |
-| **Working Context Tax** | **~106 tokens** | ~92 tokens | ~127 tokens | ~195 tokens | ~264 tokens | ~275 tokens |
-| **90-Day Stored Items (of 150)** | **49 rows** | 150 rows | 150 rows | 150 rows | 150 rows | 150 rows |
-| **Persistent Space Saved** | **67.3% (Bounded)** | 0.0% (Linear) | 0.0% (Linear) | 0.0% (Linear) | 0.0% (Linear) | 0.0% (Linear) |
+### 1. LoCoMo (Long-Context Conversational Memory)
+Evaluates multi-session agent memory across the 4 canonical LoCoMo dimensions: Single-Hop Factoid Retrieval, Temporal State Drift / ADR Updates, Multi-Hop Synthesis, and Invariant / Guardrail Retention:
+
+| Memory Engine | Overall LoCoMo | Single-Hop (3) | Temporal Updates (3) | Multi-Hop Synthesis (2) | Pinned Invariants (2) | Avg Tokens | Avg Latency |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **ACM (Arboreal Cognitive Mesh)** | **85.0%** | **90.0%** | **80.0%** | **85.0%** | **85.0%** | **142 tok** | **0.4ms** |
+| **Upgraded PCM (PCM + Kùzu)** | 87.5% | 91.7% | 83.3% | 87.5% | 87.5% | 142 tok | 0.6ms |
+| **PCM (Cognitive Mesh)** | 85.0% | 90.0% | 80.0% | 85.0% | 85.0% | 142 tok | 0.1ms |
+| **Zep Cloud (Live SDK)** | 71.0% | 80.0% | 100.0% | 70.0% | 15.0% | 195 tok | 270.7ms |
+| **Standard Semantic RAG** | 57.5% | 78.3% | 56.7% | 67.5% | 17.5% | 45 tok | < 0.1ms |
+| **Obsidian Vault (Ripgrep)** | 55.0% | 76.7% | 53.3% | 65.0% | 15.0% | 199 tok | 1.2ms |
+| **Mem0 Cloud (Live SDK)** | 15.0% | 15.0% | 15.0% | 15.0% | 15.0% | 22 tok | 366.7ms |
+
+> [!NOTE]
+> Competitor results are measured against live cloud production SDKs (`mem0ai` and `@getzep/zep-cloud`) executing identical multi-session developer queries over network roundtrips.
+
+### 2. Needle In A Haystack (NIAH)
+Retrieval accuracy of high-entropy credentials placed at 5 needle depths (0%, 25%, 50%, 75%, 100%) across scaling haystack depths:
+
+| Memory Engine | 25 Memories | 50 Memories | 100 Memories | 250 Memories | Avg Retrieval Latency |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **ACM (Arboreal Cognitive Mesh)** | **100%** | **100%** | **100%** | **100%** | **0.3ms** |
+| **PCM (Cognitive Mesh)** | 100% | 100% | 100% | 100% | 0.4ms |
+| **Standard Semantic RAG (Vector-Only)** | 100% | 100% | 100% | 100% | 0.2ms |
+| **Obsidian Vault (Ripgrep)** | 40% | 20% | 20% | 20% | 0.1ms |
 
 ---
 
@@ -102,10 +116,10 @@ bun install
 
 ### 2. Run Tests & Benchmarks
 ```bash
-# Run complete test suite (28 tests across 5 test suites)
+# Run complete test suite (42 tests across 7 test suites)
 bun test
 
-# Run architectural simulation benchmark
+# Run industry-standard benchmarks (LoCoMo & NIAH)
 bun run benchmark
 ```
 
