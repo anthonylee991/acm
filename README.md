@@ -1,190 +1,187 @@
 # Arboreal Cognitive Mesh (ACM)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Tests: 42 Passing](https://img.shields.io/badge/Tests-42%20Passing-brightgreen.svg)]()
-[![Memory Horizon](https://img.shields.io/badge/Memory%20Growth-Bounded%20O(log%20N)-purple.svg)]()
-[![Token Savings](https://img.shields.io/badge/Context%20Tax%20Reduction-83.6%25-success.svg)]()
-[![Recall Latency](https://img.shields.io/badge/Recall%20Latency-%3C%2020ms-blue.svg)]()
-[![Prompt Flickering](https://img.shields.io/badge/Prompt%20Flickering-0.0%25-brightgreen.svg)]()
+[![Tests: 53 passing](https://img.shields.io/badge/Tests-53%20passing-brightgreen.svg)]()
+[![LoCoMo test: 91.9%](https://img.shields.io/badge/LoCoMo%20test-91.9%25-blue.svg)](#benchmarks)
 
-**A biologically inspired, hierarchical agent memory architecture featuring recursive substrate bifurcation, synaptic consolidation, and nonlinear hysteresis.**
+**The cognitive memory architecture behind [MemVault](https://skillvault.dev), SkillVault's agent memory: high-quality retrieval plus a lifecycle (decay, reinforcement, spreading activation, demotion), an attention layer (slotted priming, pinned guardrails) and surprisal (flagging what is out of the ordinary, and what has stopped).**
+
+This repository is the core logic as a dependency-light TypeScript library: the strength model, recall limits, lifecycle rules, surprisal and absence detection, ingestion hygiene and the slotted prompt format. MemVault runs the same logic in production on PostgreSQL + pgvector, a neural reranker and a Kùzu knowledge graph.
 
 ---
 
-## 🧬 Architectural Evolution: PAE $\rightarrow$ PCM $\rightarrow$ ACM
+## Lineage: PAE → PCM → ACM
 
 ```
-  ┌─────────────────────────────────┐
-  │  PAE (Peripheral Attention      │  Token-disciplined slotted priming,
-  │  Engineering)                   │  [ASKER] vs. [SITUATIONAL] slots.
-  └────────────────┬────────────────┘
-                   │  Evolved with:
-  ┌────────────────▼────────────────┐
-  │  PCM (Peripheral Cognitive      │  Ebbinghaus decay, dual-layer Kùzu AST code graph,
-  │  Mesh)                          │  associative vector geometry, margin heuristics.
-  └────────────────┬────────────────┘
-                   │  Evolved with:
-  ┌────────────────▼────────────────┐
-  │  ACM (Arboreal Cognitive        │  1. Recursive Substrates (Level-of-Detail Bifurcation)
-  │  Mesh)                          │  2. Synaptic Consolidation (Episodic -> Semantic)
-  └────────────────┬────────────────┘  3. Nonlinear Hysteresis Attractor Basins
-                   │  Production-Hardened with:
-  ┌────────────────▼────────────────┐
-  │  ACM 2.1 (Fable Hardened)       │  • Ingestion Hygiene Gate (Quarantines commit/milestone noise)
-  │                                 │  • Active Supersession Tombstoning (stale_at on overrides)
-  │                                 │  • 0.52 Precision Floor & Honest Empty Recalls
-  │                                 │  • Decoupled Clean Priming (< 3.5KB payload, zero bloat)
-  │                                 │  • Decoupled Swarm Exploration (Read-only scout search)
-  └─────────────────────────────────┘
+  PAE  Peripheral Attention Engineering   memory delivered as structured slots:
+                                          [ANOMALY FLAGS] [ASKER CONTEXT] [SITUATIONAL CONTEXT]
+   │
+  PCM  Peripheral Cognitive Mesh          Ebbinghaus decay with a savings effect, pinned guardrails,
+                                          spreading activation, consolidation
+   │
+  ACM  Arboreal Cognitive Mesh            the production architecture: retrieval (vectors, reranker,
+                                          graph-linked memories, episode context), lifecycle with
+                                          demotion instead of deletion, surprisal and absence flags,
+                                          ingestion hygiene, hysteresis for guardrails
 ```
 
----
-
-## 🌟 The Three Evolutionary Pillars of ACM
-
-### 1. 🌿 Multi-Scale Bifurcation Lenses (Recursive Substrates)
-Flat memory graphs suffer from the **Context Window Tax**: unpacking full graph structures into agent prompts floods attention windows with noisy capillary details.
-* **Hierarchical LOD (Level-of-Detail):** Memory nodes serve as compressed centroids pointing to nested capillary subgraphs.
-* **Attentional Bifurcation:** Subgraphs stay packed at rest. Only when query attentional excitation exceeds threshold ($\tau_{bif} \ge 0.70$) does the macro-node dynamically bifurcate into micro-contexts, unlocking **70%–85% spatial compression**.
-
-### 2. 🧠 Synaptic Scaling & Structural Forgetting (CLS Daemon)
-Traditional vector databases keep decayed memories forever as passive "zombie rows", causing unbounded database growth and index bloat over long agent lifetimes.
-* **Hippocampal-Neocortical Consolidation:** Implements mammalian Complementary Learning Systems (CLS).
-* **Automated Abstraction:** When episodic memories decay below the consolidation floor ($S \le 0.20$), an offline daemon clusters them by semantic affinity, abstracts them into durable, high-strength **Semantic Axioms**, and prunes the raw episodic leaf noise.
-* **Bounded Memory Growth:** Memory footprint contracts from $O(N)$ episodic noise to $O(\log N)$ synthesized semantic axioms.
-
-### 3. 🎛 Bifurcation Hysteresis for Guardrails (Attractor Basins)
-In traditional memory retrieval, continuous cosine similarity thresholds cause **prompt-flickering**: a mission-critical safety invariant or production guardrail might drop out of prompt context on turn 4 simply because the user phrased their follow-up query casually.
-* **Nonlinear Cusp Dynamics:** Invariants are governed by bistable attractor states with asymmetric excitation ($\alpha_{high} = 0.75$) and deactivation ($\beta_{low} = 0.35$) thresholds.
-* **Zero Prompt Flicker:** Once an agent enters a locked security or production state, it remains solidly locked across intermediate ambiguous queries ($0.35 \le x < 0.75$) until an explicit phase transition occurs.
-
-### 4. 🐜 Ant-Colony Swarm Intelligence & Stigmergic Highways
-Rather than relying on expensive global cross-encoders across millions of graph nodes, ACM uses decentralized **swarm scout walkers**:
-* **Pheromone Stigmergy:** Discovered cognitive pathways are reinforced via verified feedback (`reinforcePath`), turning frequent reasoning bridges into high-speed highways.
-* **Continuous Evaporation:** Dormant paths decay alongside Ebbinghaus curves, pruning stale dead-end associations.
-* **Read-Only Exploration:** Swarm scout searches are decoupled from pheromone deposits to eliminate premature canalization of false leads.
-
-### 5. 🛡️ Ingestion Hygiene & Precision-Gated Retrieval (Fable Optimization Spec)
-Production AI agents operating across hundreds of commits degrade into noise if trivial progress logs or superseded rules pollute vector search:
-* **Ingestion Hygiene Gate (`isMilestoneNoise`):** Quarantines ephemeral progress messages (*"PR #268 merged"*, *"post-deploy check passed"*) into `state: 'archived'` with immediate `stale_at`, preserving the vector store exclusively for high-signal architectural decisions, traps, and procedures.
-* **Active Supersession Tombstoning:** Automatically detects override phrases (`supersedes:`, `correction for:`, `replaces:`) and soft-prunes matching older contradictory memories (`stale_at = now()`, `strength = 0.1`).
-* **0.52 Precision Floor & Honest Empty Recalls:** Drops weak similarities below 0.52 to prevent distractor padding on topic misses; returns honest `[MEMVAULT] No memories found matching query` instead of irrelevant filler.
-* **Strict Payload Discipline (< 3.5KB):** Slotted context defaults to dense markdown (< 3.5KB) with cross-section deduplication and zero technobabble banners. The full Arboreal capillary tree is decoupled and rendered only when explicitly requested (`format: 'tree'`).
+The full specification, equations and evaluation are in [PCM-SPEC.md](PCM-SPEC.md) (also at [skillvault.dev/pcm-spec](https://skillvault.dev/pcm-spec)) and [ACM-SPEC.md](ACM-SPEC.md).
 
 ---
 
-## 🏆 Standard Industry Benchmarks (Canonical LoCoMo & Real NIAH)
+## Components
 
-Evaluated against commercial cloud memory SDKs (live Mem0 Cloud with verified asynchronous settlement polling) and open-source retrieval systems across published benchmarks:
-
-### 1. Canonical LoCoMo (Long-Term Conversational Memory Benchmark)
-Evaluated on the published dataset ([Snap Research / ACL 2024](https://github.com/snap-research/locomo)) using an independent third-party LLM evaluation judge (**`deepseek/deepseek-v4.1-flash`** via OpenRouter).
-
-All competitors are tested with **verified asynchronous indexing settlement polling** (queries are only executed after cloud background workers confirm indexing has completed):
-
-| Memory Engine | Judge Pass Rate | Mean Quality Score | Cat 1: Single-Hop | Cat 2: Temporal | Cat 3: Multi-Hop | Avg Token Cost | Local Compute Time | Cloud Network RTT |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **ACM (Arboreal Cognitive Mesh)** | **100.0%** | **100.0%** | **100%** | **100%** | **100%** | 371 tok | **3.26 ms** | *None (Local)* |
-| **Mem0 Cloud (Live SDK)** | **80.0%** | **90.0%** | **100%** | **100%** | 0% | **119 tok** | *N/A (Cloud)* | **372.0 ms** |
-| **PCM (Cognitive Mesh)** | **60.0%** | **70.0%** | 50% | **100%** | 0% | 326 tok | **0.72 ms** | *None (Local)* |
-| **Standard Vector RAG** | **60.0%** | **70.0%** | 50% | **100%** | 0% | 303 tok | **0.49 ms** | *None (Local)* |
-
-* **Cued Reactivation Dynamics:** ACM uses non-linear action potential resonance to prevent passive Ebbinghaus decay from burying historical facts when an explicit semantic query is asked.
-* **Episodic Window & Temporal Anchoring:** Preserves relative chronological anchors (*"yesterday"*, *"last year"*) to pass temporal queries without date hallucination.
-* **Transparent Latency:** Local in-process execution (~3.2ms) is reported separately from cloud network latency (~370ms) to ensure honest comparisons.
-
-### 2. Real Memory Needle In A Haystack (NIAH) Scale
-Retrieval accuracy of high-entropy credentials placed at 3 needle depths (10%, 50%, 90%) across genuine database scales up to 5,000 memories:
-
-| Memory Engine | 500 Memories | 1,000 Memories | 2,500 Memories | 5,000 Memories | Avg Retrieval Latency |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| **ACM (Arboreal Cognitive Mesh)** | **100%** (3/3) | **100%** (3/3) | **100%** (3/3) | **100%** (3/3) | **12.4 ms** |
-| **Standard Semantic RAG** | **100%** (3/3) | **100%** (3/3) | **100%** (3/3) | **100%** (3/3) | **11.9 ms** |
+| Component | What it does | Status in MemVault |
+| :--- | :--- | :--- |
+| **Retrieval** | Dense vectors (768-d), neural reranker, relevance floor 0.35, recall limits derived from k (`recallLimits`) | Production |
+| **Graph-linked memories** | Memories linked to the query's entities in a knowledge graph get a score bonus | Production (+6.6 points on LoCoMo dev) |
+| **Episode context** | Neighbouring memories from the same episode around the top results (`expandEpisodes`) | Production |
+| **Strength model** | Ebbinghaus decay with a savings effect; cue-dependent reactivation in scoring (`calculateDecayedStrength`, `calculateReRankScore`) | Production |
+| **Pinned guardrails** | Strength fixed at 1.0, always delivered in `[ASKER CONTEXT]` (`PinnedGuardrailsCache`) | Production |
+| **Spreading activation** | Associates of recalled memories reinforced at recall time, no stored edges (`spreadingActivationBoosts`) | Production |
+| **Forgetting by demotion** | Faded memories archived, still searchable (`forgettingAction`) | Production |
+| **Consolidation** | Clusters of short-term memories consolidated into long-term records | Production |
+| **Surprisal** | Memories that break their routine's pattern raised as anomaly flags (`selectFamily`, `surprisalFlags`) | Production |
+| **Absence** | Regular routines that have gone quiet raised as anomaly flags (`absenceFlags`) | Production |
+| **Ingestion hygiene** | Quarantines commit/milestone noise, tombstones superseded memories, figures-aware near-duplicate merging (`isNearDuplicate`) | Production |
+| **Hysteresis gate** | Bistable lock for guardrail states, so an invariant does not flicker out on a casual follow-up | Production |
+| **Arboreal substrates** | Level-of-detail tree of memories, unpacked on attention | Rendered only on request (`format: "tree"`) |
+| **Swarm scouting** | Read-only walks over memory patterns to find related memories | Off by default (no measured gain) |
 
 ---
 
-## 🛠️ Quickstart
+## Benchmarks
 
-### 1. Installation
+All results below come from MemVault's evaluation harness, which runs the production code path (real embeddings, reranker, PostgreSQL, graph) on public datasets. Fixed answer model **DeepSeek V4.1 Flash**, separate judge **Qwen3.8 Flash**, prompts copied verbatim from Mem0's published LoCoMo harness and the LongMemEval authors' code. Comparisons are paired (exact McNemar tests on the same questions); configurations were chosen on a dev split and confirmed once on a held-out test split.
+
+### LoCoMo (held-out test split, 885 questions)
+
+| System | Accuracy (95% CI) | Context tokens |
+| :--- | :---: | :---: |
+| Plain embedding search, top 50 | 77.1% | 1,918 |
+| ACM / MemVault, compact recall (k = 10) | 87.3% | ~1,090 |
+| **ACM / MemVault, default recall (k = 50 + episode context)** | **91.9%** (89.9-93.5) | ~2,830 |
+| Whole conversation in context (ceiling) | 93.7% (91.9-95.1) | 28,201 |
+
+By category: single-hop 96.0%, temporal 92.2%, multi-hop 87.2%, open-domain 67.9%. The same answers score 94.2% under Mem0's more lenient judge.
+
+### Head to head with Mem0 (same harness, same questions)
+
+Mem0's cloud product answered 776 of the 885 test questions. On those 776:
+
+| System | Accuracy | Context tokens |
+| :--- | :---: | :---: |
+| **ACM / MemVault, default** | **91.8%** | ~2,830 |
+| Mem0 cloud, top 200 memories | 89.9% | 6,771 |
+| Mem0 cloud, top 50 | 85.6% | 1,616 |
+| Mem0 cloud, top 10 | 75.3% | — |
+
+Against Mem0's best configuration the difference is **not statistically significant** (p = 0.11), with less than half the context. Against Mem0 at a similar context size (top 50) it is (p = 6e-8).
+
+### Published numbers from other systems (not comparable)
+
+Vendors publish LoCoMo scores with their own answer models, judges and prompts: Zep 94.7% (an independent re-run measured 75.1%), Mem0 92.5%, ByteRover 92.2%, Letta 74.0%. Our harness deliberately uses a modest answer model and the strict judge. On LoCoMo, ACM is in the same band as the best published systems and within two points of having the whole conversation in context; it does not beat their self-reported numbers.
+
+### LongMemEval (knowledge-update questions only)
+
+72 knowledge-update questions of LongMemEval-S (does memory return the newest version of a changed fact?), in fixed halves: **97.2%** on the dev half (the newest evidence was retrieved for 36 of 36) and **91.7%** on the held-out half. The full LongMemEval benchmark has not been run.
+
+### Lifecycle: 180 simulated days
+
+Production decay and pruning run daily while half of the LoCoMo dev questions are asked along the way; the other half is evaluated at the end.
+
+| Forgetting policy | Accuracy on never-asked questions |
+| :--- | :---: |
+| Fresh store | 85.7% |
+| Delete faded memories | 60.6% |
+| **Demote faded memories (ACM)** | **86.0%** |
+
+Consolidation, measured separately at production defaults: 90.7% → 92.7% on LoCoMo dev (p = 0.024).
+
+### Surprisal and absence (synthetic, our own test)
+
+No public benchmark measures whether memory helps an agent notice what is out of the ordinary, so we built one: 24 synthetic personas (12 dev / 12 test), each with 8 personal routines (runs, sleep, bills, calls home) and ~30 unrelated memories. Half the routines contain one planted outlier; in the second version, some routines stop well before the question. Every routine has an everyday request that never mentions the outlier. The datasets are frozen in [`data/surprisal-v1.json`](data/surprisal-v1.json) and [`data/surprisal-v2.json`](data/surprisal-v2.json).
+
+| Held-out test split | Without flags | With flags |
+| :--- | :---: | :---: |
+| Answers accounting for a planted outlier | 35.4% | **60.4%** (p = 0.012) |
+| Same, second independent ingest | 41.7% | 50.0% (p = 0.42) |
+| Answers noticing a stopped routine | 4.5% | **54.5%** (p = 0.001) |
+| Answers inventing an anomaly (control routines) | 0-2.1% | 3.8-4.2% (n.s.) |
+
+Without flags the outlier was already in the agent's context 90-95% of the time; agents just did not notice it. The detector catches most value and content outliers but only about 55% of category changes (a different store or person); every variant that caught more also flagged more normal entries, so the precise detector is the one in production.
+
+### What did not help (measured, not shipped)
+
+Multi-hop graph walks, canonical entity merging, swarm scouting, adaptive result breadth, candidate pools of 100-150, LLM-written summaries replacing source memories (-7 points), a faster third-party reranker, and stored associative edges (about half of storage, no accuracy effect). All on LoCoMo dev against the production configuration.
+
+### Speed and space
+
+Recall median about 0.7-1.0 s in production, dominated by the hosted embedding and reranker calls (the reranker is worth about 14 points on LoCoMo). Storage about 4.5 KB per memory.
+
+### Limitations
+
+- No result here beats the self-reported LoCoMo numbers of the best commercial systems; those use different protocols.
+- Only the knowledge-update slice of LongMemEval has been measured.
+- The surprisal results are synthetic; they demonstrate the mechanism, not real-world prevalence.
+- The evaluation harness runs MemVault's production services and lives in SkillVault's codebase; the surprisal datasets are published here.
+
+---
+
+## Quickstart
+
 ```bash
 git clone https://github.com/anthonylee991/acm.git
 cd acm
 bun install
-```
-
-### 2. Run Tests & Benchmarks
-```bash
-# Run complete test suite (42 tests across 7 test suites)
 bun test
-
-# Run industry-standard benchmarks (LoCoMo & NIAH)
-bun run benchmark
 ```
-
-### 3. Basic Usage
 
 ```typescript
 import {
-  createArborBranch,
-  createArborLeaf,
-  bifurcateNode,
-  runSynapticConsolidation,
-  HysteresisGate,
+  recallLimits,
+  calculateReRankScore,
+  anomalyFlagsForRecall,
   buildPAESlots,
   formatSlotsToMarkdown,
+  type JudgedMemory,
 } from "@skillvault/acm-core";
 
-// --- 1. Recursive Substrates (Level-of-Detail Arbor) ---
-const root = createArborBranch({
-  id: "root-sys",
-  name: "System Spec",
-  summary: "Core Application Architecture",
-});
+// Recall size: k = 10 compact, k = 50 high-context (default).
+const limits = recallLimits(50); // { situational: 50, vectorCandidates: 100, promptChars: 45000, episodeSeeds: 5 }
 
-const billing = createArborBranch({
-  id: "branch-billing",
-  name: "Billing Subsystem",
-  summary: "Stripe integer cents and currency logic",
-  children: [
-    createArborLeaf({ id: "leaf-1", text: "Stripe requires zero-decimal currency handling" }),
-    createArborLeaf({ id: "leaf-2", text: "Subscription webhooks verify cryptographic signatures" }),
-  ],
-});
-root.children = [billing];
+// Score a candidate: relevance, cue-reactivated strength, scope and graph bonuses.
+const score = calculateReRankScore({ memoryId: "m1", similarity: 0.62, strength: 0.3, isGraphConnected: true });
 
-// Dynamically unpack branch when attention shifts over it
-bifurcateNode(billing, 0.85); // Unpacks capillary subgraphs
+// Memories with stored surprisal verdicts (your store supplies these; see selectFamily / SurprisalJudge).
+const memories: JudgedMemory[] = [
+  {
+    id: "c9", text: "Left at 7:10, got to work in 55 minutes because of a crash on Main St",
+    occurredAt: new Date("2026-04-20T07:35:00Z"),
+    surprisal: 0.9, note: "55-minute commute", usual: "20-25 minutes", familyIds: ["c1", "c2", "c3", "c4"],
+  },
+];
 
-// --- 2. Nonlinear Bifurcation Hysteresis Gate ---
-const gate = new HysteresisGate({ highThreshold: 0.75, lowThreshold: 0.35 });
-gate.evaluate(0.82, "User initiated production migration"); // Locks into Attractor Basin
+// Recalled memory ids in rank order -> anomaly flags for the routine being asked about.
+const flags = anomalyFlagsForRecall(memories, ["c4", "c3"], { asOf: new Date("2026-04-22") });
 
-// --- 3. Assemble Token-Disciplined Priming Context ---
 const slots = buildPAESlots({
-  userQuery: "How do we handle refunds?",
-  askerItems: [
-    { memoryId: "a1", text: "Never refund without 2FA confirmation", importance: "pinned", strength: 1.0 },
-  ],
+  userQuery: "Draft a note saying I might be late to the 7:45 meeting",
+  askerItems: [{ memoryId: "p1", text: "Keep messages to my manager short", importance: "pinned", strength: 1.0 }],
+  situationalItems: [{ memoryId: "c4", text: "Commute took 22 minutes", occurredAt: "2026-04-13T07:32:00Z" }],
+  anomalyFlags: flags,
 });
 
-const promptPriming = formatSlotsToMarkdown(slots, {
-  arborContext: root,
-  hysteresisState: gate.getState(),
-});
-
-console.log(promptPriming);
+console.log(formatSlotsToMarkdown(slots, { situationalLimit: limits.situational }));
 ```
 
 ---
 
-## 🔬 Whitepaper & Technical Specifications
+## Specifications
 
-For full mathematical derivations, proof of convergence, and benchmark harness code:
-- [ACM Technical Specification & Whitepaper (Version 2.0)](ACM-SPEC.md)
-- [Legacy PCM Specification (Version 1.0)](PCM-SPEC.md)
+- [PCM Specification, version 2.0](PCM-SPEC.md): architecture, equations and full evaluation.
+- [ACM Specification](ACM-SPEC.md): the arboreal, hysteresis and consolidation subsystems.
 
----
-
-## 📄 License
+## License
 
 MIT © 2026 Anthony Lee & SkillVault Engineering.

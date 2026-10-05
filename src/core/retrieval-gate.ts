@@ -1,8 +1,39 @@
 import type { PAESlots, RecallResponse } from "../schema/index.js";
 import type { MemoryWithLifecycle } from "./hygiene.js";
 
-export const DEFAULT_SIMILARITY_PRECISION_FLOOR = 0.52;
+/**
+ * Relevance floor for recall candidates. 0.35 (with a neural reranker) is the production value: on LoCoMo dev
+ * it scored 68.7% vs 64.9% at 0.52 while still returning nothing for 87% of off-topic queries.
+ */
+export const DEFAULT_SIMILARITY_PRECISION_FLOOR = 0.35;
 export const SIMILARITY_FLOOR = DEFAULT_SIMILARITY_PRECISION_FLOOR;
+
+/** Default number of memories per recall (high-context). Callers wanting compact recall pass k = 10. */
+export const DEFAULT_RECALL_K = 50;
+
+export interface RecallLimits {
+  /** Situational slots returned. */
+  situational: number;
+  /** Vector candidates fetched before reranking. */
+  vectorCandidates: number;
+  /** Character budget for the rendered prompt. */
+  promptChars: number;
+  /** Top memories whose episode neighbours are added. */
+  episodeSeeds: number;
+}
+
+/**
+ * Every recall limit derives from k, so k = 10 reproduces compact recall (LoCoMo test 87.3% at ~1,090 context
+ * tokens) and k = 50 the high-context default (91.9% at ~2,830).
+ */
+export function recallLimits(k: number = DEFAULT_RECALL_K): RecallLimits {
+  return {
+    situational: Math.max(10, k),
+    vectorCandidates: Math.max(50, 2 * k),
+    promptChars: Math.max(14_000, 900 * k),
+    episodeSeeds: Math.max(3, Math.round(k / 10)),
+  };
+}
 
 export interface ScoredMemoryCandidate extends MemoryWithLifecycle {
   similarity: number;
@@ -22,8 +53,8 @@ export function filterActiveMemories<T extends MemoryWithLifecycle>(memories: T[
 }
 
 /**
- * Applies the 0.52 Precision Floor Gate.
- * Memories with similarity < 0.52 are dropped to prevent distractor padding,
+ * Applies the precision floor gate.
+ * Memories below the floor are dropped to prevent distractor padding,
  * unless they are explicitly pinned invariants (which are always immune).
  */
 export function applyPrecisionFloor<T extends ScoredMemoryCandidate>(

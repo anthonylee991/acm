@@ -114,11 +114,11 @@ describe("Fable 5.1 Production Audit Upgrades", () => {
       expect(active[0]?.memoryId).toBe("active-1");
     });
 
-    test("applyPrecisionFloor drops weak similarities (< 0.52) unless pinned", () => {
+    test("applyPrecisionFloor drops similarities below the floor unless pinned", () => {
       const candidates = [
         { memoryId: "1", text: "Top match", similarity: 0.85, importance: "high" },
         { memoryId: "2", text: "Borderline match", similarity: SIMILARITY_FLOOR, importance: "default" },
-        { memoryId: "3", text: "Weak distractor", similarity: 0.41, importance: "default" },
+        { memoryId: "3", text: "Weak distractor", similarity: 0.21, importance: "default" },
         { memoryId: "4", text: "Pinned safety rule with low query sim", similarity: 0.20, importance: "pinned" },
       ];
 

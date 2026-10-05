@@ -25,6 +25,8 @@ export interface FormatSlotsOptions {
   hysteresisState?: HysteresisState;
   format?: "slotted" | "tree" | "text" | "json";
   maxBytes?: number;
+  /** Situational memories rendered (production: recallLimits(k).situational). Default 5. */
+  situationalLimit?: number;
 }
 
 export function buildPAESlots(params: BuildPAESlotsParams): PAESlots {
@@ -33,7 +35,7 @@ export function buildPAESlots(params: BuildPAESlotsParams): PAESlots {
     direct_answer: [],
     asker_context: (params.askerItems ?? []).slice(0, 5),
     situational_context: (params.situationalItems ?? []).slice(0, 5),
-    anomaly_flags: (params.anomalyFlags ?? []).slice(0, 3),
+    anomaly_flags: (params.anomalyFlags ?? []).slice(0, 5),
   };
 }
 
@@ -103,9 +105,25 @@ export function resolveSupersededContext(situationalItems: SituationalContextIte
   return resolved;
 }
 
+function formatAnomalyFlag(item: AnomalyFlagItem): string {
+  if (item.text !== undefined) {
+    // Surprisal / absence: the memory itself, what is out of the ordinary, and the usual pattern it breaks.
+    const date = item.occurredAt ? `(${item.occurredAt.split("T")[0]}) ` : "";
+    return `- ${date}${item.text}\n  Out of the ordinary: ${item.description}${item.usual ? `\n  Usual: ${item.usual}` : ""}`;
+  }
+  const dir = item.direction ? `[FLAG: ${item.direction.toUpperCase()}] ` : "";
+  const values = item.value !== undefined && item.baseline !== undefined ? ` (${item.value} vs baseline ${item.baseline})` : "";
+  return `- ${dir}${item.metric}: ${item.description}${values}`;
+}
+
 export function formatSlotsToMarkdown(slots: PAESlots, options?: FormatSlotsOptions): string {
   const parts: string[] = [];
   const seenTexts = new Set<string>();
+
+  // 0. ANOMALY FLAGS first: agents overlook out-of-the-ordinary memories in a flat list.
+  if (slots.anomaly_flags && slots.anomaly_flags.length > 0) {
+    parts.push(["### [ANOMALY FLAGS — PAY ATTENTION]", ...slots.anomaly_flags.slice(0, 5).map(formatAnomalyFlag)].join("\n"));
+  }
 
   // 1. ASKER CONTEXT (Pure pinned rules only, max 5, deduplicated)
   if (slots.asker_context && slots.asker_context.length > 0) {
@@ -133,25 +151,17 @@ export function formatSlotsToMarkdown(slots: PAESlots, options?: FormatSlotsOpti
 
   if (resolvedSituational.length > 0) {
     const sitLines: string[] = ["### [SITUATIONAL CONTEXT: Recent Decisions & Context]"];
-    for (const item of resolvedSituational.slice(0, 5)) {
+    for (const item of resolvedSituational.slice(0, options?.situationalLimit ?? 5)) {
       const normalized = item.text.trim();
       if (!seenTexts.has(normalized)) {
-        sitLines.push(`- ${normalized}`);
+        const date = item.occurredAt ? ` [Session Date: ${item.occurredAt.split("T")[0]}]` : "";
+        sitLines.push(`- ${normalized}${date}`);
         seenTexts.add(normalized);
       }
     }
     if (sitLines.length > 1) {
       parts.push(sitLines.join("\n"));
     }
-  }
-
-  // 4. ANOMALY FLAGS
-  if (slots.anomaly_flags && slots.anomaly_flags.length > 0) {
-    const flagLines: string[] = ["### [ANOMALY FLAGS: Drift & Contradiction Alerts]"];
-    for (const item of slots.anomaly_flags.slice(0, 3)) {
-      flagLines.push(`- [FLAG: ${item.direction.toUpperCase()}] ${item.description}`);
-    }
-    parts.push(flagLines.join("\n"));
   }
 
   let result = parts.join("\n\n");

@@ -1,21 +1,11 @@
 {
   "name": "@skillvault/acm-core",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "Arboreal Cognitive Mesh (ACM): A biologically inspired agent memory architecture with recursive substrates, synaptic consolidation, and bifurcation hysteresis.",
   "main": "src/index.ts",
   "type": "module",
   "scripts": {
-    "test": "bun test",
-    "benchmark": "bun run src/evals/standard-benchmarks.ts",
-    "benchmark:standard": "bun run src/evals/standard-benchmarks.ts",
-    "benchmark:locomo": "bun run src/evals/locomo-canonical.ts",
-    "benchmark:niah": "bun run src/evals/niah-runner.ts",
-    "benchmark:acm-sim": "bun run src/evals/acm-comparative-benchmark.ts",
-    "benchmark:sim": "bun run src/evals/architectural-sim.ts",
-    "benchmark:live": "bun run src/evals/live-harness.ts",
-    "benchmark:human": "bun run src/evals/human-benchmark.ts",
-    "benchmark:full": "bun run src/evals/full-live-evaluation.ts",
-    "benchmark:conversational": "bun run src/evals/conversational-live-benchmark.ts"
+    "test": "bun test"
   },
   "keywords": [
     "ai",

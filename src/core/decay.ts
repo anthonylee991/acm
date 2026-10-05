@@ -1,10 +1,19 @@
 import type { Importance } from "../schema/index.js";
 
-export const DEFAULT_DECAY_RATE = 0.05; // ~14 day effective half-life
+/**
+ * Strength model used in production by MemVault (SkillVault): Ebbinghaus decay with a savings effect.
+ * A default memory falls to ~5% of its initial strength over DEFAULT_DECAY_WINDOW_DAYS without reinforcement;
+ * each reinforcement lengthens that window by 25% (up to 20 reinforcements, 6x).
+ */
+export const DEFAULT_DECAY_WINDOW_DAYS = 90;
 export const PINNED_STRENGTH = 1.0;
-export const HIGH_INITIAL_STRENGTH = 0.85;
-export const DEFAULT_INITIAL_STRENGTH = 0.70;
+export const HIGH_INITIAL_STRENGTH = 0.8;
+export const DEFAULT_INITIAL_STRENGTH = 0.4;
 export const MIN_DECAYED_STRENGTH = 0.01;
+/** Reinforcement on recall: S += BOOST_ALPHA * ln(1 + retrievals in the window). */
+export const BOOST_ALPHA = 0.17;
+/** Project scope bonus in the re-rank score. */
+export const SCOPE_BONUS = 0.1;
 
 const INVARIANT_PATTERNS = [
   /anaphylactic/i,
@@ -37,15 +46,16 @@ export function getInitialStrength(importance: Importance, text?: string): numbe
 }
 
 /**
- * Calculates decayed strength using Ebbinghaus exponential decay model:
- * S(t) = S_0 * exp(-lambda * delta_t / (1 + ln(1 + B)))
+ * Decayed strength after `elapsedMs` without reinforcement:
+ *   S(t) = S_0 * exp(-t / tau),  tau = T_eff / 3,  T_eff = windowDays * (1 + 0.25 * min(B, 20))
+ * where B is the number of reinforcements (the savings effect).
  */
 export function calculateDecayedStrength(
   initialStrength: number,
   elapsedMs: number,
   boostCount: number = 0,
   importance: Importance = "default",
-  decayRate: number = DEFAULT_DECAY_RATE,
+  decayWindowDays: number = DEFAULT_DECAY_WINDOW_DAYS,
   text?: string,
 ): number {
   if (importance === "pinned" || (text && isInvariantContent(text))) {
@@ -61,25 +71,29 @@ export function calculateDecayedStrength(
     !Number.isFinite(elapsedMs) ||
     !Number.isFinite(boostCount) ||
     !Number.isFinite(initialStrength) ||
-    !Number.isFinite(decayRate)
+    !Number.isFinite(decayWindowDays)
   ) {
     return MIN_DECAYED_STRENGTH;
   }
 
   const elapsedDays = Math.max(0, elapsedMs / (1000 * 60 * 60 * 24));
-  const savingsFactor = 1.0 + Math.log(1.0 + Math.max(0, boostCount));
-  const effectiveDecay = (decayRate * elapsedDays) / savingsFactor;
-  const decayed = initialStrength * Math.exp(-effectiveDecay);
+  const effectiveWindowDays = decayWindowDays * (1 + 0.25 * Math.min(Math.max(0, boostCount), 20));
+  const tau = effectiveWindowDays / 3;
+  const decayed = initialStrength * Math.exp(-elapsedDays / tau);
 
   return Math.max(MIN_DECAYED_STRENGTH, Math.min(1.0, decayed));
 }
 
-export function boostStrengthOnAccess(currentStrength: number, importance: Importance): number {
+/** Reinforcement on recall, with diminishing returns for repeated retrievals in the same window. */
+export function boostStrengthOnAccess(
+  currentStrength: number,
+  importance: Importance,
+  retrievalsInWindow: number = 1,
+): number {
   if (importance === "pinned") {
     return PINNED_STRENGTH;
   }
-  const boosted = currentStrength + (1.0 - currentStrength) * 0.35;
-  return Math.min(1.0, boosted);
+  return Math.min(1.0, currentStrength + BOOST_ALPHA * Math.log(1 + Math.max(1, retrievalsInWindow)));
 }
 
 export function calculateReRankScore(
@@ -89,8 +103,13 @@ export function calculateReRankScore(
     strength: number;
     createdAt?: Date;
     isProjectMatch?: boolean;
+    /** The memory is linked to the query's entities in the knowledge graph. */
+    isGraphConnected?: boolean;
+    /** Strength of that graph link, 0..1. */
+    graphLinkStrength?: number;
   },
   now: Date = new Date(),
+  graphBoost: number = 0.15,
 ): number {
   // Cued Reactivation Dynamics:
   // When an explicit retrieval cue strongly matches a memory (similarity >= 0.25),
@@ -102,7 +121,9 @@ export function calculateReRankScore(
 
   let score = item.similarity * 0.75 + effectiveStrength * 0.25;
   if (item.isProjectMatch) {
-    score += 0.08;
+    score += SCOPE_BONUS;
   }
+  if (item.isGraphConnected) score += graphBoost;
+  score += graphBoost * Math.max(0, Math.min(1, item.graphLinkStrength ?? 0));
   return score;
 }

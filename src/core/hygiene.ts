@@ -157,3 +157,19 @@ export function tombstoneSupersededMemories<T extends MemoryWithLifecycle>(
 
   return { updated, tombstonedIds, count: tombstonedIds.length };
 }
+
+/**
+ * Near-duplicate test for ingestion. Embeddings put "Ran 5k in 27:10" and "Ran 5k in 41:30" above any sensible
+ * duplicate threshold, but they are different events; merging them drops routine entries (the outliers
+ * surprisal looks for) and re-dates the old entry. Near duplicates must state the same figures.
+ */
+export const NEAR_DUPLICATE_SIMILARITY = 0.94;
+
+export function sameFigures(a: string, b: string): boolean {
+  const figures = (s: string) => (s.match(/\d+(?:[.,:/]\d+)*/g) ?? []).sort().join(" ");
+  return figures(a) === figures(b);
+}
+
+export function isNearDuplicate(similarity: number, existingText: string, newText: string): boolean {
+  return similarity >= NEAR_DUPLICATE_SIMILARITY && sameFigures(existingText, newText);
+}

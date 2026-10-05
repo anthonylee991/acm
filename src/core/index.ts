@@ -11,3 +11,5 @@ export * from "./hygiene.js";
 export * from "./retrieval-gate.js";
 
 
+export * from "./lifecycle.js";
+export * from "./surprisal.js";

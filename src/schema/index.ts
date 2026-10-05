@@ -67,12 +67,21 @@ export const SituationalContextItemSchema = z.object({
 });
 export type SituationalContextItem = z.infer<typeof SituationalContextItemSchema>;
 
+/**
+ * Something out of the ordinary: a numeric metric against its baseline, or (surprisal / absence) a memory that
+ * breaks or has stopped its routine's pattern, with what is different (`description`) and what is usual.
+ */
 export const AnomalyFlagItemSchema = z.object({
   metric: z.string(),
-  value: z.number(),
-  baseline: z.number(),
-  direction: z.enum(["high", "low"]),
+  value: z.number().optional(),
+  baseline: z.number().optional(),
+  direction: z.enum(["high", "low"]).optional(),
   description: z.string(),
+  memoryId: z.string().optional(),
+  text: z.string().optional(),
+  occurredAt: z.string().optional(),
+  usual: z.string().optional(),
+  score: z.number().optional(),
 });
 export type AnomalyFlagItem = z.infer<typeof AnomalyFlagItemSchema>;
 
